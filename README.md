@@ -1,56 +1,123 @@
-# Welcome to your Expo app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+<p align="center">
+  <img src="assets/images/chacing_icon.png" alt="Logo Chacing" width="120" />
+</p>
 
-## Get started
+<h1 align="center">Chacing</h1>
 
-1. Install dependencies
+<p align="center">
+  <em>Catat jajan, budget aman.</em><br/>
+  Prototipe aplikasi pencatat pengeluaran harian untuk mahasiswa, dibuat dengan React Native + Expo.
+</p>
 
-   ```bash
-   npm install
-   ```
+<p align="center">
+  <img src="https://img.shields.io/badge/React_Native-0.86-61DAFB?logo=react&logoColor=white" alt="React Native" />
+  <img src="https://img.shields.io/badge/Expo-SDK_57-000020?logo=expo&logoColor=white" alt="Expo" />
+  <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/NativeWind-v4-38BDF8?logo=tailwindcss&logoColor=white" alt="NativeWind" />
+</p>
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 📑 Daftar Isi
 
-In the output, you'll find options to open the app in a
+- [Identitas](#-identitas)
+- [Tema & Deskripsi](#-tema--deskripsi)
+- [Cara Menjalankan](#-cara-menjalankan)
+- [Struktur Proyek](#-struktur-proyek)
+- [Analisis Kebutuhan](#-analisis-kebutuhan)
+- [Penjelasan Konsep]()
+- [Video Demo]()
+- [Penggunaan AI](#-penggunaan-ai)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 👤 Identitas
 
-## Get a fresh project
+| | |
+|---|---|
+| **Nama** | Joseph Christian Kurniawan |
+| **NIM** | 2802402306 |
+| **Kelas** | LA95 |
+| **Mata Kuliah** | COMP6923051 – Hybrid Application Development |
+| **Ujian** | Mid Exam (Take Home), BINUS University Semarang |
 
-When you're ready, run:
+## 🎯 Tema & Deskripsi
+
+**Tema:** Finance
+
+> ⚠️ Aplikasi ini adalah **prototipe**: seluruh data bersifat statis (disimpan di `src/data/`) dan autentikasi belum terhubung ke backend.
+
+## 🚀 Cara Menjalankan
+
+**Prasyarat:** Node.js LTS, npm, dan aplikasi **Expo Go** di HP (atau Android Emulator).
 
 ```bash
-npm run reset-project
+# 1. Clone repositori
+git clone https://github.com/Joseph-chris12/Hybrid-Tech.git
+cd Hybrid-Tech
+
+# 2. Install dependency
+npm install
+
+# 3. Jalankan Metro bundler
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Lalu scan QR code dengan Expo Go (Android) atau aplikasi Kamera (iOS).
 
-### Other setup steps
+**Akun demo:** karena autentikasi belum diimplementasikan, isi email dengan format valid (mis. `demo@chacing.id`) dan kata sandi minimal TODO karakter.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## 🗂️ Struktur Proyek
 
-## Learn more
+```
+src/
+├── app/                  # Layar (file-based routing Expo Router)
+│   ├── _layout.tsx       # Stack navigator
+│   ├── index.tsx         # Login & Register
+│   ├── Home.tsx          # Beranda + daftar transaksi
+│   ├── detail/[id].tsx   # Detail transaksi "menyusul"
+│   └── budget.tsx        # Fitur pendukung "menyusul"
+```
 
-To learn more about developing your project with Expo, look at the following resources:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Dasar Masalah
 
-## Join the community
+- **Self-control adalah faktor penentu.** Dari beberapa faktor yang diuji, hanya self-control yang berpengaruh signifikan terhadap pengelolaan keuangan mahasiswa ([Amalia & Yuliati, 2025](https://doi.org/10.31959/jm.v14i2.3102)).
+  → Chacing dirancang untuk membantu pengendalian diri (budget mingguan, "aman dibelanjakan hari ini"), bukan sekadar mencatat.
 
-Join our community of developers creating universal apps.
+- **Utang paylater jadi perhatian regulator.** OJK membatasi pengguna paylater karena khawatir generasi muda terjerat utang; lebih dari 50% penggunanya berusia 19–34 tahun ([Irawati, 2025](https://infobanknews.com/ojk-beberkan-alasan-batasi-usia-dan-penghasilan-pengguna-paylater)).
+  → Fitur split bill mencatat siapa berutang ke siapa, supaya utang kecil tidak menumpuk tanpa disadari.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+### Target Pengguna
+
+Chacing ditujukan untuk **mahasiswa berusia 18 tahun ke atas** yang mulai mengelola uang sendiri, misalnya dari uang saku bulanan, beasiswa, atau penghasilan kerja paruh waktu.
+
+Di usia ini, mahasiswa sudah punya akses penuh ke pembayaran digital dan layanan kredit seperti paylater, tetapi kebiasaan finansialnya masih terbentuk. Banyak yang sebenarnya tahu cara mengatur uang, namun kesulitan menerapkannya secara konsisten.
+
+Chacing cocok untuk mahasiswa yang:
+- sering kehabisan uang sebelum periode berikutnya tanpa tahu ke mana perginya
+- ingin mencatat pengeluaran, tapi merasa mencatat manual terlalu merepotkan
+- sering makan atau patungan bersama teman dan perlu membagi tagihan dengan adil
+- ingin punya batas belanja yang jelas setiap minggu
+
+### Penjelasan Konsep
+
+TBC
+
+### Video Demo
+
+
+TBC 
+
+
+---
+
+## 🤖 Penggunaan AI
+
+Log penggunaan AI Menyusul
+
+## 📄 Lisensi
+
+Lihat berkas [LICENSE](LICENSE).
