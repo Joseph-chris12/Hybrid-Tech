@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import { useEffect, useState } from "react";
 import {
@@ -101,16 +102,19 @@ type NavItemProps = {
   icon: SymbolViewProps["name"];
   label: string;
   active?: boolean;
+  onPress?: () => void;
 };
 
-const NavItem = ({ icon, label, active }: NavItemProps) => (
+const NavItem = ({ icon, label, active, onPress }: NavItemProps) => (
   <Pressable
+    onPress={onPress}
     accessibilityRole="tab"
     accessibilityState={{ selected: active }}
-    className="h-full w-14 items-center justify-center"
+    className="h-full flex-1 items-center justify-center"
   >
     <Icon name={icon} size={24} color={active ? PRIMARY : ON_SURFACE_VARIANT} />
     <Text
+      numberOfLines={1}
       className={`mt-0.5 text-label-sm ${active ? "font-bold text-primary" : "text-on-surface-variant"}`}
     >
       {label}
@@ -333,7 +337,10 @@ export default function Home() {
               <Text className="text-headline-sm font-bold text-on-surface">
                 Transaksi terakhir
               </Text>
-              <Pressable className="flex-row items-center gap-0.5">
+              <Pressable
+                onPress={() => router.replace("/detailTransaksi")}
+                className="flex-row items-center gap-0.5"
+              >
                 {({ pressed }) => (
                   <>
                     <Text
@@ -488,8 +495,9 @@ export default function Home() {
               web: "receipt_long",
             }}
             label="Transaksi"
+            onPress={() => router.replace("/detailTransaksi")}
           />
-          <View className="relative h-full w-14 items-center justify-center">
+          <View className="relative h-full flex-1 items-center justify-center">
             <Pressable
               accessibilityLabel="Tambah Transaksi"
               accessibilityRole="button"
