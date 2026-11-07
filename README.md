@@ -50,7 +50,7 @@
 
 ## 🚀 Cara Menjalankan
 
-**Prasyarat:** Node.js LTS, npm, dan aplikasi **Expo Go** di HP (atau Android Emulator).
+**Prasyarat:** Node.js `^20.19.4`, `^22.13.0`, atau `^24.3.0` (diuji dengan v24), npm, dan aplikasi **Expo Go** yang mendukung **Expo SDK 57** di HP (atau Android Emulator).
 
 ```bash
 # 1. Clone repositori
