@@ -104,7 +104,65 @@ Chacing cocok untuk mahasiswa yang:
 
 ### Penjelasan Konsep
 
-TBC
+#### Cara Kerja React Native
+
+React Native memungkinkan aplikasi ditulis dengan JavaScript/TypeScript dan React, tetapi hasilnya bukan halaman web di dalam WebView. Komponen seperti `<View>` dan `<Text>` diterjemahkan menjadi komponen native asli: `UIView` di iOS dan `android.view.View` di Android. Kode JavaScript dijalankan oleh mesin Hermes, lalu berkomunikasi dengan sisi native lewat JSI (JavaScript Interface) pada New Architecture, sehingga pemanggilan bisa langsung tanpa bridge JSON seperti arsitektur lama. Di Chacing, Metro bundler menggabungkan kode di `src/` menjadi satu bundle, sedangkan Expo menyediakan toolchain, modul native seperti `expo-symbols`, dan Expo Router untuk navigasi.
+
+#### Keunggulan untuk Aplikasi Hybrid
+
+1. **Satu codebase untuk Android dan iOS** — Halaman Login, Beranda, dan Detail Transaksi cukup ditulis sekali, sehingga waktu pengembangan prototipe Chacing lebih singkat.
+2. **Tampilan dan performa native** — Karena dirender sebagai komponen native, daftar transaksi dan animasi terasa halus seperti aplikasi asli.
+3. **Fast Refresh dan ekosistem luas** — Perubahan kode langsung terlihat di simulator tanpa build ulang, dan paket seperti NativeWind dan `react-native-svg` tinggal dipasang lewat npm.
+
+#### Komponen & Props
+
+Komponen adalah fungsi yang mengembalikan potongan UI sehingga bisa dipakai ulang. Props adalah data yang dikirim dari komponen induk ke komponen anak dan bersifat read-only. `TransactionRow` di bawah menerima `title`, `subtitle`, dan `amount` lewat props, jadi satu komponen cukup untuk semua baris transaksi di Beranda.
+
+```tsx
+type TransactionRowProps = {
+  icon: SymbolViewProps["name"];
+  title: string;
+  subtitle: string;
+  amount: string;
+  time: string;
+};
+
+const TransactionRow = ({ icon, title, subtitle, amount, time }: TransactionRowProps) => (
+  <Pressable className="flex-row items-center justify-between rounded-2xl p-3.5">
+    ...
+    <Text>{title}</Text>
+    <Text>{amount}</Text>
+  </Pressable>
+);
+
+<TransactionRow title="Kopi Kenangan" amount="-Rp 22.000" ... />
+```
+
+#### State (Hooks)
+
+State adalah data milik sebuah komponen yang bisa berubah, disimpan dengan hook `useState`. Bedanya dengan props, state diubah oleh komponen itu sendiri, sedangkan props datang dari luar. Setiap kali fungsi setter dipanggil, React merender ulang komponen sehingga UI otomatis mengikuti data terbaru. Pada halaman login, `isRegister` menentukan teks tombol dan tautan, sedangkan `emailError` memunculkan pesan kesalahan.
+
+```tsx
+const [isRegister, setIsRegister] = useState(false);
+const [emailError, setEmailError] = useState("");
+
+<TextInput onChangeText={(text) => { setEmail(text); setEmailError(""); }} />
+{emailError ? <Text>{emailError}</Text> : null}
+
+<Pressable onPress={() => setIsRegister((value) => !value)}>
+  <Text>{isRegister ? "Masuk" : "Daftar"}</Text>
+</Pressable>
+```
+
+#### Navigasi
+
+Expo Router memakai file-based routing: setiap file di `src/app/` otomatis menjadi layar, dan `_layout.tsx` mengatur `Stack` navigator-nya. `router.push` menambah layar baru di atas stack sehingga tombol back bisa kembali, sedangkan `router.replace` mengganti layar yang sedang tampil. Setelah login dipakai `replace` agar pengguna tidak bisa kembali ke layar login lewat tombol back. Parameter dapat dikirim lewat opsi `params` dan dibaca di layar tujuan dengan `useLocalSearchParams`.
+
+```tsx
+router.replace("/Home");
+
+router.replace("/detailTransaksi");
+```
 
 ### Video Demo
 

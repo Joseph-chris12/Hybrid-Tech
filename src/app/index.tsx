@@ -18,6 +18,18 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [isRegister, setIsRegister] = useState(false);
+
+  const onSubmit = () => {
+    if (!isRegister && !/^[^\s@]+@[^\s@]+$/.test(email.trim())) {
+      setEmailError(
+        "Email harus mengandung @ di tengahnya, contoh: nama@email.com",
+      );
+      return;
+    }
+    router.replace("/Home");
+  };
 
   return (
     <KeyboardAvoidingView
@@ -61,13 +73,16 @@ const Login = () => {
               <View className="relative">
                 <TextInput
                   value={email}
-                  onChangeText={setEmail}
+                  onChangeText={(text) => {
+                    setEmail(text);
+                    setEmailError("");
+                  }}
                   placeholder="nama@email.com"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  className="w-full rounded-2xl border border-[#FED1D6] bg-white px-4 py-3.5 pr-10 text-sm font-medium text-[#1F2937] focus:border-[#FB6E7F]"
+                  className={`w-full rounded-2xl border bg-white px-4 py-3.5 pr-10 text-sm font-medium text-[#1F2937] focus:border-[#FB6E7F] ${emailError ? "border-[#BA1A1A]" : "border-[#FED1D6]"}`}
                 />
                 <View
                   pointerEvents="none"
@@ -89,6 +104,11 @@ const Login = () => {
                   </Svg>
                 </View>
               </View>
+              {emailError ? (
+                <Text className="mt-1.5 text-xs font-medium text-[#BA1A1A]">
+                  {emailError}
+                </Text>
+              ) : null}
             </View>
 
             <View>
@@ -96,11 +116,13 @@ const Login = () => {
                 <Text className="text-xs font-bold uppercase tracking-wider text-[#1F2937]">
                   Kata Sandi
                 </Text>
-                <Pressable>
-                  <Text className="text-xs font-semibold text-[#B6505C]">
-                    Lupa sandi?
-                  </Text>
-                </Pressable>
+                {!isRegister && (
+                  <Pressable>
+                    <Text className="text-xs font-semibold text-[#B6505C]">
+                      Lupa sandi?
+                    </Text>
+                  </Pressable>
+                )}
               </View>
               <View className="relative">
                 <TextInput
@@ -150,10 +172,12 @@ const Login = () => {
 
             <View className="pt-2">
               <Pressable
-                onPress={() => router.replace("/Home")}
+                onPress={onSubmit}
                 className="w-full flex-row items-center justify-center gap-2 rounded-2xl bg-[#DB606F] px-4 py-3.5 shadow-md shadow-[#DB606F]/25 active:scale-[0.99] active:bg-[#c94e5d]"
               >
-                <Text className="text-base font-bold text-white">Masuk</Text>
+                <Text className="text-base font-bold text-white">
+                  {isRegister ? "Daftar" : "Masuk"}
+                </Text>
                 <Svg
                   width={16}
                   height={16}
@@ -206,9 +230,19 @@ const Login = () => {
         </View>
 
         <View className="w-full max-w-sm flex-row items-center justify-center py-4">
-          <Text className="text-sm text-[#6B7280]">Belum punya akun?</Text>
-          <Pressable className="ml-1">
-            <Text className="text-sm font-bold text-[#B6505C]">Daftar</Text>
+          <Text className="text-sm text-[#6B7280]">
+            {isRegister ? "Sudah punya akun?" : "Belum punya akun?"}
+          </Text>
+          <Pressable
+            className="ml-1"
+            onPress={() => {
+              setIsRegister((value) => !value);
+              setEmailError("");
+            }}
+          >
+            <Text className="text-sm font-bold text-[#B6505C]">
+              {isRegister ? "Masuk" : "Daftar"}
+            </Text>
           </Pressable>
         </View>
       </ScrollView>
