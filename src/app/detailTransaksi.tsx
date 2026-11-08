@@ -1,8 +1,31 @@
 import { router } from "expo-router";
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
-import { Image, Pressable, ScrollView, Text, View } from "react-native";
+import { useState, type ReactNode } from "react";
+import {
+  Animated,
+  Image,
+  PanResponder,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Circle } from "react-native-svg";
+import {
+  CATEGORIES,
+  filterTransactions,
+  formatExpense,
+  formatRupiah,
+  formatSubtitle,
+  getGroupedTransactions,
+  getPeriodBudget,
+  getWeeklyChange,
+  PERIOD_LABELS,
+  sumAmount,
+  type Period,
+} from "../data/transaction";
+import { removeTransaction, useTransactions } from "../data/transactionStore";
 
 const mascot = require("../../assets/images/chacing_icon.png");
 
@@ -113,8 +136,87 @@ const NavItem = ({ icon, label, active, onPress }: NavItemProps) => (
   </Pressable>
 );
 
+const ACTION_WIDTH = 80;
+
+type SwipeableRowProps = {
+  onDelete: () => void;
+  children: ReactNode;
+};
+
+const SwipeableRow = ({ onDelete, children }: SwipeableRowProps) => {
+  const [{ translateX, panHandlers }] = useState(() => {
+    const translateX = new Animated.Value(0);
+    let open = false;
+    const settle = (toValue: number) => {
+      open = toValue !== 0;
+      Animated.spring(translateX, {
+        toValue,
+        bounciness: 0,
+        useNativeDriver: true,
+      }).start();
+    };
+    const responder = PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
+      onPanResponderMove: (_, g) => {
+        const base = open ? -ACTION_WIDTH : 0;
+        translateX.setValue(Math.max(-ACTION_WIDTH, Math.min(0, base + g.dx)));
+      },
+      onPanResponderRelease: (_, g) => {
+        const base = open ? -ACTION_WIDTH : 0;
+        settle(base + g.dx < -ACTION_WIDTH / 2 ? -ACTION_WIDTH : 0);
+      },
+      onPanResponderTerminate: () => settle(open ? -ACTION_WIDTH : 0),
+    });
+    return { translateX, panHandlers: responder.panHandlers };
+  });
+
+  return (
+    <View className="relative overflow-hidden rounded-xl">
+      <View className="absolute inset-y-0 right-0 w-20 items-center justify-center bg-error">
+        <Pressable
+          onPress={onDelete}
+          accessibilityLabel="Hapus transaksi"
+          accessibilityRole="button"
+          className="h-full w-full items-center justify-center gap-0.5"
+        >
+          <Icon
+            name={{ ios: "trash", android: "delete", web: "delete" }}
+            size={22}
+            color={ON_PRIMARY}
+          />
+          <Text className="text-label-sm font-bold text-on-error">Hapus</Text>
+        </Pressable>
+      </View>
+      <Animated.View
+        {...panHandlers}
+        style={{ transform: [{ translateX }] }}
+        className="z-10"
+      >
+        {children}
+      </Animated.View>
+    </View>
+  );
+};
+
+const PERIOD_OPTIONS: { key: Period; label: string }[] = [
+  { key: "week", label: "Minggu ini" },
+  { key: "month", label: "Bulan ini" },
+  { key: "all", label: "Semua" },
+];
+
 export default function DetailTransaksi() {
   const insets = useSafeAreaInsets();
+  const list = useTransactions();
+  const [period, setPeriod] = useState<Period>("week");
+  const [category, setCategory] = useState<string | null>(null);
+  const [showCategories, setShowCategories] = useState(false);
+  const filtered = filterTransactions(list, period, category);
+  const groups = getGroupedTransactions(filtered);
+  const periodTotal = sumAmount(filtered);
+  const ringProgress = Math.min(1, periodTotal / getPeriodBudget(period));
+  const weeklyChange = getWeeklyChange(list);
+  const saving = (weeklyChange ?? 0) >= 0;
 
   return (
     <View className="flex-1 bg-surface">
@@ -136,7 +238,7 @@ export default function DetailTransaksi() {
               </Text>
               <View className="items-center justify-center rounded-full bg-secondary-fixed px-2 py-0.5">
                 <Text className="text-label-sm text-on-secondary-fixed">
-                  6 Catatan
+                  {filtered.length} Catatan
                 </Text>
               </View>
             </View>
@@ -189,29 +291,47 @@ export default function DetailTransaksi() {
                     color={SECONDARY}
                   />
                   <Text className="text-label-md text-on-surface-variant">
-                    Total Pengeluaran Minggu Ini
+                    {period === "all"
+                      ? "Total Pengeluaran"
+                      : `Total Pengeluaran ${PERIOD_LABELS[period]}`}
                   </Text>
                 </View>
                 <Text className="text-display-mobile text-on-surface">
-                  Rp 385.000
+                  {formatRupiah(periodTotal)}
                 </Text>
-                <View className="flex-row flex-wrap items-center gap-1 pt-0.5">
-                  <Icon
-                    name={{
-                      ios: "chart.line.downtrend.xyaxis",
-                      android: "trending_down",
-                      web: "trending_down",
-                    }}
-                    size={14}
-                    color={PRIMARY}
-                  />
-                  <Text className="text-body-sm text-on-surface-variant">
-                    <Text className="font-bold text-primary">
-                      12% lebih hemat
-                    </Text>{" "}
-                    dibanding minggu lalu! ✨
+                {period === "week" && !category && weeklyChange !== null ? (
+                  <View className="flex-row flex-wrap items-center gap-1 pt-0.5">
+                    <Icon
+                      name={
+                        saving
+                          ? {
+                              ios: "chart.line.downtrend.xyaxis",
+                              android: "trending_down",
+                              web: "trending_down",
+                            }
+                          : {
+                              ios: "chart.line.uptrend.xyaxis",
+                              android: "trending_up",
+                              web: "trending_up",
+                            }
+                      }
+                      size={14}
+                      color={PRIMARY}
+                    />
+                    <Text className="text-body-sm text-on-surface-variant">
+                      <Text className="font-bold text-primary">
+                        {Math.abs(weeklyChange)}%{" "}
+                        {saving ? "lebih hemat" : "lebih boros"}
+                      </Text>{" "}
+                      dibanding minggu lalu!{saving ? " ✨" : ""}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text className="pt-0.5 text-body-sm text-on-surface-variant">
+                    {category ? `${category} • ` : ""}
+                    {filtered.length} transaksi tercatat
                   </Text>
-                </View>
+                )}
               </View>
               {/* Playful Mascot Micro Ring Badge */}
               <View className="relative h-14 w-14 shrink-0 items-center justify-center rounded-full bg-surface-container-lowest shadow-sm shadow-black/5">
@@ -237,7 +357,7 @@ export default function DetailTransaksi() {
                     stroke="#fd7081"
                     strokeWidth={3.5}
                     strokeDasharray={88}
-                    strokeDashoffset={32}
+                    strokeDashoffset={88 * (1 - ringProgress)}
                     strokeLinecap="round"
                   />
                 </Svg>
@@ -262,161 +382,113 @@ export default function DetailTransaksi() {
             className="-mx-1 mb-space-lg"
             contentContainerClassName="items-center gap-space-xs px-1 pb-1"
           >
-            <Pressable className="shrink-0 flex-row items-center gap-1.5 rounded-full bg-secondary px-4 py-2 shadow-sm shadow-black/5 active:scale-95">
+            {PERIOD_OPTIONS.map((option) => {
+              const active = option.key === period;
+              return (
+                <Pressable
+                  key={option.key}
+                  onPress={() => setPeriod(option.key)}
+                  className={`shrink-0 flex-row items-center gap-1.5 rounded-full px-4 py-2 shadow-sm shadow-black/5 active:scale-95 ${active ? "bg-secondary" : "bg-surface-container-lowest"}`}
+                >
+                  {active && (
+                    <Icon
+                      name={{
+                        ios: "calendar",
+                        android: "calendar_today",
+                        web: "calendar_today",
+                      }}
+                      size={16}
+                      color={ON_PRIMARY}
+                    />
+                  )}
+                  <Text
+                    className={`text-label-md ${active ? "text-on-secondary" : "text-on-surface-variant"}`}
+                  >
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+            <Pressable
+              onPress={() => setShowCategories((value) => !value)}
+              className={`shrink-0 flex-row items-center gap-1 rounded-full px-3.5 py-2 shadow-sm shadow-black/5 active:bg-surface-container ${category ? "bg-secondary" : "bg-surface-container-low"}`}
+            >
+              <Text
+                className={`text-label-md ${category ? "text-on-secondary" : "text-on-surface-variant"}`}
+              >
+                {category ?? "Kategori"}
+              </Text>
               <Icon
-                name={{
-                  ios: "calendar",
-                  android: "calendar_today",
-                  web: "calendar_today",
-                }}
+                name={
+                  showCategories
+                    ? {
+                        ios: "chevron.up",
+                        android: "expand_less",
+                        web: "expand_less",
+                      }
+                    : {
+                        ios: "chevron.down",
+                        android: "expand_more",
+                        web: "expand_more",
+                      }
+                }
                 size={16}
-                color={ON_PRIMARY}
-              />
-              <Text className="text-label-md text-on-secondary">
-                Minggu ini
-              </Text>
-            </Pressable>
-            <Pressable className="shrink-0 rounded-full bg-surface-container-lowest px-4 py-2 shadow-sm shadow-black/5 active:bg-surface-container-low">
-              <Text className="text-label-md text-on-surface-variant">
-                Bulan ini
-              </Text>
-            </Pressable>
-            <Pressable className="shrink-0 rounded-full bg-surface-container-lowest px-4 py-2 shadow-sm shadow-black/5 active:bg-surface-container-low">
-              <Text className="text-label-md text-on-surface-variant">
-                Semua
-              </Text>
-            </Pressable>
-            <Pressable className="shrink-0 flex-row items-center gap-1 rounded-full bg-surface-container-low px-3.5 py-2 shadow-sm shadow-black/5 active:bg-surface-container">
-              <Text className="text-label-md text-on-surface-variant">
-                Kategori
-              </Text>
-              <Icon
-                name={{
-                  ios: "chevron.down",
-                  android: "expand_more",
-                  web: "expand_more",
-                }}
-                size={16}
-                color={ON_SURFACE_VARIANT}
+                color={category ? ON_PRIMARY : ON_SURFACE_VARIANT}
               />
             </Pressable>
           </ScrollView>
+          {showCategories && (
+            <View className="mb-space-lg flex-row flex-wrap gap-space-xs">
+              {[null, ...CATEGORIES].map((item) => (
+                <Pressable
+                  key={item ?? "all"}
+                  onPress={() => {
+                    setCategory(item);
+                    setShowCategories(false);
+                  }}
+                  className={`rounded-full px-3.5 py-1.5 shadow-sm shadow-black/5 ${item === category ? "bg-secondary" : "bg-surface-container-lowest"}`}
+                >
+                  <Text
+                    className={`text-label-md ${item === category ? "text-on-secondary" : "text-on-surface-variant"}`}
+                  >
+                    {item ?? "Semua kategori"}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
           {/* Grouped Transactions Feed */}
           <View className="gap-space-lg">
-            {/* Day Group 1: Hari Ini */}
-            <View>
-              <DayHeader title="Hari Ini, 24 Okt" total="Rp 36.000" dot />
-              <View className="mt-1 gap-space-xs">
-                {/* Item 1 */}
-                <TransactionRow
-                  icon={{
-                    ios: "cup.and.saucer",
-                    android: "coffee",
-                    web: "coffee",
-                  }}
-                  title="Kopi Kenangan"
-                  subtitle="Makan & Minum • GoPay"
-                  amount="-Rp 22.000"
+            {groups.length === 0 && (
+              <Text className="py-space-lg text-center text-body-sm text-on-surface-variant">
+                Belum ada transaksi untuk filter ini.
+              </Text>
+            )}
+            {groups.map((group) => (
+              <View key={group.date}>
+                <DayHeader
+                  title={group.title}
+                  total={formatRupiah(group.total)}
+                  dot={group.isToday}
                 />
-                {/* Item 2 */}
-                <TransactionRow
-                  icon={{
-                    ios: "scooter",
-                    android: "two_wheeler",
-                    web: "two_wheeler",
-                  }}
-                  title="GrabBike ke Kantor"
-                  subtitle="Transportasi • OVO"
-                  amount="-Rp 14.000"
-                />
-              </View>
-            </View>
-            {/* Day Group 2: Kemarin (Includes Swipe-to-Delete Action State) */}
-            <View>
-              <DayHeader title="Kemarin, 23 Okt" total="Rp 75.000" />
-              <View className="mt-1 gap-space-xs">
-                {/* Item 3 */}
-                <TransactionRow
-                  icon={{
-                    ios: "bag",
-                    android: "shopping_bag",
-                    web: "shopping_bag",
-                  }}
-                  title="Indomaret Point"
-                  subtitle="Belanja • Tunai"
-                  amount="-Rp 35.000"
-                />
-                {/* Item 4: Interactive Swiped-Left State Showing Red Delete Action Button */}
-                <View className="relative overflow-hidden rounded-xl bg-error shadow-sm shadow-black/5">
-                  {/* Background Action Bed */}
-                  <View className="absolute inset-y-0 right-0 w-20 items-center justify-center bg-error">
-                    <Pressable
-                      accessibilityLabel="Hapus transaksi"
-                      accessibilityRole="button"
-                      className="h-full w-full items-center justify-center gap-0.5"
+                <View className="mt-1 gap-space-xs">
+                  {group.items.map((trx) => (
+                    <SwipeableRow
+                      key={trx.id}
+                      onDelete={() => removeTransaction(trx.id)}
                     >
-                      <Icon
-                        name={{
-                          ios: "trash",
-                          android: "delete",
-                          web: "delete",
-                        }}
-                        size={22}
-                        color={ON_PRIMARY}
+                      <TransactionRow
+                        icon={trx.icon}
+                        title={trx.title}
+                        subtitle={formatSubtitle(trx)}
+                        amount={formatExpense(trx.amount)}
+                        muted={trx.muted}
                       />
-                      <Text className="text-label-sm font-bold text-on-error">
-                        Hapus
-                      </Text>
-                    </Pressable>
-                  </View>
-                  {/* Foreground Sliding Transaction Card */}
-                  <View
-                    style={{ transform: [{ translateX: -76 }] }}
-                    className="z-10"
-                  >
-                    <TransactionRow
-                      icon={{
-                        ios: "fork.knife",
-                        android: "restaurant",
-                        web: "restaurant",
-                      }}
-                      title="Nasi Padang Garuda"
-                      subtitle="Makan & Minum • GoPay"
-                      amount="-Rp 40.000"
-                    />
-                  </View>
+                    </SwipeableRow>
+                  ))}
                 </View>
               </View>
-            </View>
-            {/* Day Group 3: Senin, 21 Okt */}
-            <View>
-              <DayHeader title="Senin, 21 Okt" total="Rp 274.000" />
-              <View className="mt-1 gap-space-xs">
-                {/* Item 5 */}
-                <TransactionRow
-                  icon={{
-                    ios: "music.note",
-                    android: "music_note",
-                    web: "music_note",
-                  }}
-                  title="Spotify Family Plan"
-                  subtitle="Tagihan / Hiburan • Bank BCA"
-                  amount="-Rp 29.000"
-                  muted
-                />
-                {/* Item 6 */}
-                <TransactionRow
-                  icon={{
-                    ios: "bag",
-                    android: "local_mall",
-                    web: "local_mall",
-                  }}
-                  title="Belanja Bulanan Superindo"
-                  subtitle="Belanja • Bank BCA"
-                  amount="-Rp 245.000"
-                />
-              </View>
-            </View>
+            ))}
           </View>
           {/* Friendly Mascot Milestone Footer Note */}
           <View className="mt-space-lg flex-row items-center gap-3 rounded-xl bg-surface-container-low p-4 shadow-sm shadow-black/5">
@@ -498,6 +570,7 @@ export default function DetailTransaksi() {
           />
           <View className="relative h-full flex-1 items-center justify-center">
             <Pressable
+              onPress={() => router.push("/tambahTransaksi")}
               accessibilityLabel="Tambah Transaksi"
               accessibilityRole="button"
               className="absolute -top-5 h-12 w-12 items-center justify-center rounded-full bg-primary shadow-lg shadow-secondary-container/50 active:translate-y-px"

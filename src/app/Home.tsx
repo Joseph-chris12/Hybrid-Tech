@@ -11,6 +11,15 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  formatExpense,
+  formatRecentTime,
+  formatRupiah,
+  formatSubtitle,
+  getBudgetSummary,
+  getRecentTransactions,
+} from "../data/transaction";
+import { useTransactions } from "../data/transactionStore";
 
 const mascot = require("../../assets/images/chacing_icon.png");
 
@@ -124,6 +133,9 @@ const NavItem = ({ icon, label, active, onPress }: NavItemProps) => (
 
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const list = useTransactions();
+  const budget = getBudgetSummary(list);
+  const recent = getRecentTransactions(list, 4);
   const [wave] = useState(() => new Animated.Value(0));
   const [wiggle] = useState(() => new Animated.Value(0));
   const [tipsFlash, setTipsFlash] = useState(false);
@@ -264,24 +276,27 @@ export default function Home() {
             <View className="relative z-10">
               <View className="flex-row items-baseline gap-1">
                 <Text className="text-display-mobile text-on-surface">
-                  Rp 340.000
+                  {formatRupiah(budget.remaining)}
                 </Text>
               </View>
               <Text className="text-body-sm text-on-surface-variant">
-                dari total batas Rp 500.000
+                dari total batas {formatRupiah(budget.limit)}
               </Text>
             </View>
             {/* Progress Bar Tracker */}
             <View className="relative z-10 gap-1.5">
               <View className="h-2.5 w-full overflow-hidden rounded-full bg-primary-fixed/60">
-                <View className="h-full w-[32%] rounded-full bg-secondary-container" />
+                <View
+                  className="h-full rounded-full bg-secondary-container"
+                  style={{ width: `${budget.usedPercent}%` }}
+                />
               </View>
               <View className="flex-row items-center justify-between">
                 <Text className="text-label-sm text-on-surface-variant">
-                  Terpakai 32% (Rp 160.000)
+                  Terpakai {budget.usedPercent}% ({formatRupiah(budget.spent)})
                 </Text>
                 <Text className="text-label-sm font-bold text-primary">
-                  68% Aman
+                  {budget.safePercent}% Aman
                 </Text>
               </View>
             </View>
@@ -314,7 +329,7 @@ export default function Home() {
                 web: "shield_with_heart",
               }}
               label="Aman hari ini"
-              value="Rp 48.000"
+              value={formatRupiah(budget.safePerDay)}
               note="Biar cukup ke Minggu"
               noteClassName="text-primary"
             />
@@ -326,8 +341,8 @@ export default function Home() {
                 web: "receipt_long",
               }}
               label="Sudah terpakai"
-              value="Rp 160.000"
-              note="4 transaksi minggu ini"
+              value={formatRupiah(budget.spent)}
+              note={`${budget.count} transaksi minggu ini`}
               noteClassName="text-on-surface-variant"
             />
           </View>
@@ -363,54 +378,16 @@ export default function Home() {
             </View>
             {/* Transaction List Stack */}
             <View className="gap-2.5">
-              {/* Row 1: Kopi Kenangan */}
-              <TransactionRow
-                icon={{
-                  ios: "cup.and.saucer",
-                  android: "coffee",
-                  web: "coffee",
-                }}
-                title="Kopi Kenangan"
-                subtitle="Makanan & Minuman • GoPay"
-                amount="-Rp 22.000"
-                time="Hari ini, 10:15"
-              />
-              {/* Row 2: GrabBike ke Kantor */}
-              <TransactionRow
-                icon={{
-                  ios: "scooter",
-                  android: "two_wheeler",
-                  web: "two_wheeler",
-                }}
-                title="GrabBike ke Kantor"
-                subtitle="Transportasi • OVO"
-                amount="-Rp 14.000"
-                time="Hari ini, 08:30"
-              />
-              {/* Row 3: Indomaret Point */}
-              <TransactionRow
-                icon={{
-                  ios: "bag",
-                  android: "shopping_bag",
-                  web: "shopping_bag",
-                }}
-                title="Indomaret Point"
-                subtitle="Kebutuhan Harian • Tunai"
-                amount="-Rp 35.000"
-                time="Kemarin, 19:40"
-              />
-              {/* Row 4: Spotify Family Plan */}
-              <TransactionRow
-                icon={{
-                  ios: "headphones",
-                  android: "headphones",
-                  web: "headphones",
-                }}
-                title="Spotify Family Plan"
-                subtitle="Hiburan • Bank BCA"
-                amount="-Rp 29.000"
-                time="22 Okt"
-              />
+              {recent.map((trx) => (
+                <TransactionRow
+                  key={trx.id}
+                  icon={trx.icon}
+                  title={trx.title}
+                  subtitle={formatSubtitle(trx)}
+                  amount={formatExpense(trx.amount)}
+                  time={formatRecentTime(trx)}
+                />
+              ))}
             </View>
           </View>
           {/* 5. Interactive Tips Cuan Chacing Banner */}
@@ -499,6 +476,7 @@ export default function Home() {
           />
           <View className="relative h-full flex-1 items-center justify-center">
             <Pressable
+              onPress={() => router.push("/tambahTransaksi")}
               accessibilityLabel="Tambah Transaksi"
               accessibilityRole="button"
               className="absolute -top-5 h-12 w-12 items-center justify-center rounded-full bg-primary shadow-lg shadow-secondary-container/50 active:translate-y-px"
