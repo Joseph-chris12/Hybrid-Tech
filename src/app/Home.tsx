@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { SymbolView, type SymbolViewProps } from "expo-symbols";
+import type { SymbolViewProps } from "expo-symbols";
 import { useEffect, useState } from "react";
 import {
   Animated,
@@ -19,23 +19,13 @@ import {
   getBudgetSummary,
   getRecentTransactions,
 } from "../data/transaction";
+import { Icon } from "../components/Icon";
+import { NavItem } from "../components/NavItem";
+import { TransactionRow } from "../components/TransactionRow";
+import { ON_PRIMARY, ON_SURFACE_VARIANT, PRIMARY } from "../components/colors";
 import { useTransactions } from "../data/transactionStore";
 
 const mascot = require("../../assets/images/chacing_icon.png");
-
-const PRIMARY = "#a23546";
-const ON_PRIMARY = "#ffffff";
-const ON_SURFACE_VARIANT = "#564143";
-
-type IconProps = {
-  name: SymbolViewProps["name"];
-  size: number;
-  color: string;
-};
-
-const Icon = ({ name, size, color }: IconProps) => (
-  <SymbolView name={name} size={size} tintColor={color} />
-);
 
 type SmallCardProps = {
   icon: SymbolViewProps["name"];
@@ -66,69 +56,6 @@ const SmallCard = ({
       <Text className={`mt-0.5 text-label-sm ${noteClassName}`}>{note}</Text>
     </View>
   </View>
-);
-
-type TransactionRowProps = {
-  icon: SymbolViewProps["name"];
-  title: string;
-  subtitle: string;
-  amount: string;
-  time: string;
-};
-
-const TransactionRow = ({
-  icon,
-  title,
-  subtitle,
-  amount,
-  time,
-}: TransactionRowProps) => (
-  <Pressable className="flex-row items-center justify-between rounded-2xl bg-surface-container-lowest p-3.5 shadow-sm shadow-black/5 active:bg-surface-container-low">
-    <View className="min-w-0 flex-1 flex-row items-center gap-3">
-      <View className="h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-low">
-        <Icon name={icon} size={22} color={PRIMARY} />
-      </View>
-      <View className="min-w-0 flex-1">
-        <Text numberOfLines={1} className="text-label-lg text-on-surface">
-          {title}
-        </Text>
-        <Text
-          numberOfLines={1}
-          className="text-body-sm text-on-surface-variant"
-        >
-          {subtitle}
-        </Text>
-      </View>
-    </View>
-    <View className="shrink-0 items-end pl-2">
-      <Text className="text-label-lg font-bold text-on-surface">{amount}</Text>
-      <Text className="text-label-sm text-on-surface-variant">{time}</Text>
-    </View>
-  </Pressable>
-);
-
-type NavItemProps = {
-  icon: SymbolViewProps["name"];
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-};
-
-const NavItem = ({ icon, label, active, onPress }: NavItemProps) => (
-  <Pressable
-    onPress={onPress}
-    accessibilityRole="tab"
-    accessibilityState={{ selected: active }}
-    className="h-full flex-1 items-center justify-center"
-  >
-    <Icon name={icon} size={24} color={active ? PRIMARY : ON_SURFACE_VARIANT} />
-    <Text
-      numberOfLines={1}
-      className={`mt-0.5 text-label-sm ${active ? "font-bold text-primary" : "text-on-surface-variant"}`}
-    >
-      {label}
-    </Text>
-  </Pressable>
 );
 
 export default function Home() {
@@ -353,7 +280,7 @@ export default function Home() {
                 Transaksi terakhir
               </Text>
               <Pressable
-                onPress={() => router.replace("/detailTransaksi")}
+                onPress={() => router.push("/transaksi")}
                 className="flex-row items-center gap-0.5"
               >
                 {({ pressed }) => (
@@ -386,6 +313,12 @@ export default function Home() {
                   subtitle={formatSubtitle(trx)}
                   amount={formatExpense(trx.amount)}
                   time={formatRecentTime(trx)}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/detail/[id]",
+                      params: { id: trx.id },
+                    })
+                  }
                 />
               ))}
             </View>
@@ -472,7 +405,7 @@ export default function Home() {
               web: "receipt_long",
             }}
             label="Transaksi"
-            onPress={() => router.replace("/detailTransaksi")}
+            onPress={() => router.push("/transaksi")}
           />
           <View className="relative h-full flex-1 items-center justify-center">
             <Pressable

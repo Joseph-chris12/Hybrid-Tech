@@ -18,16 +18,26 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmError, setConfirmError] = useState("");
   const [isRegister, setIsRegister] = useState(false);
 
   const onSubmit = () => {
-    if (!isRegister && !/^[^\s@]+@[^\s@]+$/.test(email.trim())) {
-      setEmailError(
-        "Email harus mengandung @ di tengahnya, contoh: nama@email.com",
-      );
-      return;
-    }
+    const emailMessage = /^[^\s@]+@[^\s@]+$/.test(email.trim())
+      ? ""
+      : "Email harus mengandung @ di tengahnya, contoh: nama@email.com";
+    const passwordMessage =
+      password.length >= 6 ? "" : "Kata sandi minimal 6 karakter";
+    const confirmMessage =
+      isRegister && confirmPassword !== password
+        ? "Konfirmasi sandi tidak sama dengan kata sandi"
+        : "";
+    setEmailError(emailMessage);
+    setPasswordError(passwordMessage);
+    setConfirmError(confirmMessage);
+    if (emailMessage || passwordMessage || confirmMessage) return;
     router.replace("/Home");
   };
 
@@ -127,13 +137,17 @@ const Login = () => {
               <View className="relative">
                 <TextInput
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setPasswordError("");
+                    setConfirmError("");
+                  }}
                   placeholder="Masukkan kata sandi"
                   placeholderTextColor="#9CA3AF"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoComplete="password"
-                  className="w-full rounded-2xl border border-[#FB6E7F] bg-white px-4 py-3.5 pr-10 text-sm font-medium text-[#1F2937] focus:border-[#FB6E7F]"
+                  className={`w-full rounded-2xl border bg-white px-4 py-3.5 pr-10 text-sm font-medium text-[#1F2937] focus:border-[#FB6E7F] ${passwordError ? "border-[#BA1A1A]" : "border-[#FB6E7F]"}`}
                 />
                 <Pressable
                   onPress={() => setShowPassword((value) => !value)}
@@ -168,7 +182,37 @@ const Login = () => {
                   )}
                 </Pressable>
               </View>
+              {passwordError ? (
+                <Text className="mt-1.5 text-xs font-medium text-[#BA1A1A]">
+                  {passwordError}
+                </Text>
+              ) : null}
             </View>
+
+            {isRegister && (
+              <View>
+                <Text className="mb-1.5 text-xs font-bold uppercase tracking-wider text-[#1F2937]">
+                  Konfirmasi Sandi
+                </Text>
+                <TextInput
+                  value={confirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    setConfirmError("");
+                  }}
+                  placeholder="Ulangi kata sandi"
+                  placeholderTextColor="#9CA3AF"
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-sm font-medium text-[#1F2937] focus:border-[#FB6E7F] ${confirmError ? "border-[#BA1A1A]" : "border-[#FED1D6]"}`}
+                />
+                {confirmError ? (
+                  <Text className="mt-1.5 text-xs font-medium text-[#BA1A1A]">
+                    {confirmError}
+                  </Text>
+                ) : null}
+              </View>
+            )}
 
             <View className="pt-2">
               <Pressable
@@ -238,6 +282,9 @@ const Login = () => {
             onPress={() => {
               setIsRegister((value) => !value);
               setEmailError("");
+              setPasswordError("");
+              setConfirmError("");
+              setConfirmPassword("");
             }}
           >
             <Text className="text-sm font-bold text-[#B6505C]">

@@ -66,7 +66,7 @@ npx expo start
 
 Lalu scan QR code dengan Expo Go (Android) atau aplikasi Kamera (iOS).
 
-**Akun demo:** karena autentikasi belum diimplementasikan, isi email dengan format valid (mis. `demo@chacing.id`) dan kata sandi minimal TODO karakter.
+**Akun demo:** karena autentikasi belum diimplementasikan, isi email dengan format valid (mis. `demo@chacing.id`) dan kata sandi minimal 6 karakter (contoh: `rahasia`). Saat mendaftar, isi juga "Konfirmasi Sandi" dengan teks yang sama.
 
 ## 🗂️ Struktur Proyek
 
@@ -161,7 +161,7 @@ Expo Router memakai file-based routing: setiap file di `src/app/` otomatis menja
 ```tsx
 router.replace("/Home");
 
-router.replace("/detailTransaksi");
+router.replace("/transaksi");
 ```
 
 ### Video Demo

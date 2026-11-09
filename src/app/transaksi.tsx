@@ -1,5 +1,4 @@
 import { router } from "expo-router";
-import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import { useState, type ReactNode } from "react";
 import {
   Animated,
@@ -25,25 +24,18 @@ import {
   sumAmount,
   type Period,
 } from "../data/transaction";
+import { Icon } from "../components/Icon";
+import { NavItem } from "../components/NavItem";
+import { TransactionRow } from "../components/TransactionRow";
+import {
+  ON_PRIMARY,
+  ON_SURFACE_VARIANT,
+  PRIMARY,
+  SECONDARY,
+} from "../components/colors";
 import { removeTransaction, useTransactions } from "../data/transactionStore";
 
 const mascot = require("../../assets/images/chacing_icon.png");
-
-const PRIMARY = "#a23546";
-const SECONDARY = "#aa3145";
-const ON_PRIMARY = "#ffffff";
-const ON_SECONDARY_FIXED = "#40000e";
-const ON_SURFACE_VARIANT = "#564143";
-
-type IconProps = {
-  name: SymbolViewProps["name"];
-  size: number;
-  color: string;
-};
-
-const Icon = ({ name, size, color }: IconProps) => (
-  <SymbolView name={name} size={size} tintColor={color} />
-);
 
 type DayHeaderProps = {
   title: string;
@@ -59,81 +51,6 @@ const DayHeader = ({ title, total, dot }: DayHeaderProps) => (
     </View>
     <Text className="text-label-md text-on-surface-variant">{total}</Text>
   </View>
-);
-
-type TransactionRowProps = {
-  icon: SymbolViewProps["name"];
-  title: string;
-  subtitle: string;
-  amount: string;
-  muted?: boolean;
-};
-
-const TransactionRow = ({
-  icon,
-  title,
-  subtitle,
-  amount,
-  muted,
-}: TransactionRowProps) => (
-  <View className="flex-row items-center justify-between rounded-xl bg-surface-container-lowest p-3.5 shadow-sm shadow-black/5">
-    <View className="min-w-0 flex-1 flex-row items-center gap-3">
-      <View
-        className={`h-11 w-11 shrink-0 items-center justify-center rounded-full ${muted ? "bg-surface-container-high" : "bg-secondary-fixed"}`}
-      >
-        <Icon
-          name={icon}
-          size={20}
-          color={muted ? ON_SURFACE_VARIANT : ON_SECONDARY_FIXED}
-        />
-      </View>
-      <View className="min-w-0 flex-1">
-        <Text
-          numberOfLines={1}
-          className="text-[15px] font-semibold text-on-surface"
-        >
-          {title}
-        </Text>
-        <Text
-          numberOfLines={1}
-          className="text-body-sm text-on-surface-variant"
-        >
-          {subtitle}
-        </Text>
-      </View>
-    </View>
-    <Text className="shrink-0 pl-2 text-right text-label-lg font-bold text-on-surface">
-      {amount}
-    </Text>
-  </View>
-);
-
-type NavItemProps = {
-  icon: SymbolViewProps["name"];
-  label: string;
-  active?: boolean;
-  onPress?: () => void;
-};
-
-const NavItem = ({ icon, label, active, onPress }: NavItemProps) => (
-  <Pressable
-    onPress={onPress}
-    accessibilityRole="tab"
-    accessibilityState={{ selected: active }}
-    className="h-full flex-1 items-center justify-center"
-  >
-    <Icon
-      name={icon}
-      size={24}
-      color={active ? SECONDARY : ON_SURFACE_VARIANT}
-    />
-    <Text
-      numberOfLines={1}
-      className={`mt-0.5 text-label-sm ${active ? "font-bold text-secondary" : "text-on-surface-variant"}`}
-    >
-      {label}
-    </Text>
-  </Pressable>
 );
 
 const ACTION_WIDTH = 80;
@@ -205,7 +122,7 @@ const PERIOD_OPTIONS: { key: Period; label: string }[] = [
   { key: "all", label: "Semua" },
 ];
 
-export default function DetailTransaksi() {
+export default function Transaksi() {
   const insets = useSafeAreaInsets();
   const list = useTransactions();
   const [period, setPeriod] = useState<Period>("week");
@@ -483,6 +400,12 @@ export default function DetailTransaksi() {
                         subtitle={formatSubtitle(trx)}
                         amount={formatExpense(trx.amount)}
                         muted={trx.muted}
+                        onPress={() =>
+                          router.push({
+                            pathname: "/detail/[id]",
+                            params: { id: trx.id },
+                          })
+                        }
                       />
                     </SwipeableRow>
                   ))}
@@ -557,7 +480,7 @@ export default function DetailTransaksi() {
               web: "grid_view",
             }}
             label="Beranda"
-            onPress={() => router.replace("/Home")}
+            onPress={() => router.dismissTo("/Home")}
           />
           <NavItem
             icon={{
@@ -566,6 +489,7 @@ export default function DetailTransaksi() {
               web: "receipt_long",
             }}
             label="Transaksi"
+            accent="secondary"
             active
           />
           <View className="relative h-full flex-1 items-center justify-center">

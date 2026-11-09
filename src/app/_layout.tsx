@@ -10,7 +10,18 @@ export default function TabLayout() {
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="Home" options={{ headerShown: false }} />
-        <Stack.Screen name="detailTransaksi" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="transaksi"
+          options={{
+            headerShown: false,
+            animation: "fade",
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="detail/[id]"
+          options={{ title: "Detail Transaksi" }}
+        />
         <Stack.Screen
           name="tambahTransaksi"
           options={{ title: "Tambah Transaksi", presentation: "modal" }}
